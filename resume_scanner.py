@@ -6,118 +6,148 @@ import re
 app = Flask(__name__)
 
 JOB_KEYWORDS = {
-    'python': 15, 'flask': 12, 'MATLAB': 12, 'api': 10,
+    'python': 15, 'flask': 12, 'matlab': 12, 'api': 10,
     'pandas': 8, 'sql': 8, 'git': 7, 'docker': 6,
-    'C': 10, 'data': 8, 'web': 8, 'javascript': 6
+    'c': 10, 'data': 8, 'web': 8, 'javascript': 6
 }
 
 HTML = '''
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
+    <meta charset="UTF-8">
     <title>🤖 AI Resume Scanner by S. Gomathi Durga</title>
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <style>
-        * {margin:0;padding:0;box-sizing:border-box}
-        body {
-            font-family:'Segoe UI',sans-serif;
-            background:linear-gradient(135deg,#667eea 0%,#764ba2 100%);
+        *{margin:0;padding:0;box-sizing:border-box;font-family:'Segoe UI',system-ui,-apple-system,BlinkMacSystemFont,sans-serif}
+        body{
             min-height:100vh;
-            padding:20px;
-            color:#333;
+            padding:24px 10px;
+            background:linear-gradient(135deg,#667eea 0%,#764ba2 100%);
+            color:#1f2933;
         }
-        .container {
-            max-width:800px;
+        .container{
+            max-width:820px;
             margin:0 auto;
-            background:rgba(255,255,255,0.95);
-            border-radius:20px;
-            padding:40px;
-            box-shadow:0 20px 40px rgba(0,0,0,0.1);
+            background:rgba(255,255,255,0.96);
+            border-radius:22px;
+            padding:26px 18px 26px;
+            box-shadow:0 24px 60px rgba(15,23,42,0.45);
+            border:1px solid rgba(226,232,240,0.95);
         }
-        h1 {
+        h1{
             text-align:center;
             color:#4a5568;
-            margin-bottom:10px;
-            font-size:2.5em;
+            margin-bottom:6px;
+            font-size:2rem;
         }
-        .subtitle {
+        .subtitle{
             text-align:center;
             color:#718096;
-            margin-bottom:30px;
-            font-size:1.1em;
+            margin-bottom:18px;
+            font-size:0.9rem;
         }
-        input,textarea,button {
+        form{margin-bottom:12px}
+        input[type="file"],
+        textarea,
+        button{
             width:100%;
-            padding:15px;
-            margin:10px 0;
+            padding:12px;
+            margin:8px 0;
             border:2px solid #e2e8f0;
             border-radius:12px;
-            font-size:16px;
-            transition:all 0.3s;
+            font-size:0.95rem;
+            transition:all .25s;
         }
-        input:focus,textarea:focus {
+        textarea{
+            min-height:80px;
+            resize:vertical;
+        }
+        input[type="file"]{
+            padding:10px;
+            background:#f7fafc;
+        }
+        input:focus,textarea:focus{
             outline:none;
             border-color:#667eea;
-            box-shadow:0 0 0 3px rgba(102,126,234,0.1);
+            box-shadow:0 0 0 3px rgba(102,126,234,0.14);
         }
-        button {
+        button{
             background:linear-gradient(135deg,#667eea,#764ba2);
-            color:white;
+            color:#f9fafb;
             font-weight:600;
             border:none;
             cursor:pointer;
-            font-size:18px;
+            font-size:1rem;
+            margin-top:6px;
+            box-shadow:0 14px 30px rgba(102,126,234,0.35);
         }
-        button:hover {
-            transform:translateY(-2px);
-            box-shadow:0 10px 20px rgba(102,126,234,0.3);
+        button:hover{
+            transform:translateY(-1px);
+            filter:brightness(1.03);
         }
-        .result {
+
+        .result{
             background:#f7fafc;
-            border-radius:12px;
-            padding:25px;
-            margin:25px 0;
+            border-radius:14px;
+            padding:18px 14px 14px;
+            margin:18px 0 4px;
             border-left:5px solid #667eea;
+            font-size:0.9rem;
         }
-        .score {
-            font-size:4em;
+        .score{
+            font-size:3rem;
             font-weight:800;
             background:linear-gradient(135deg,#48bb78,#38a169);
             -webkit-background-clip:text;
             -webkit-text-fill-color:transparent;
             display:block;
             text-align:center;
-            margin:20px 0;
+            margin:14px 0;
         }
-        .skills-grid {
+        .skills-grid{
             display:grid;
-            grid-template-columns:repeat(auto-fit,minmax(200px,1fr));
-            gap:15px;
-            margin:20px 0;
+            grid-template-columns:repeat(auto-fit,minmax(180px,1fr));
+            gap:10px;
+            margin:10px 0 6px;
         }
-        .skill-card {
-            background:white;
+        .skill-card{
+            background:#ffffff;
             border-radius:10px;
-            padding:15px;
-            box-shadow:0 4px 12px rgba(0,0,0,0.1);
+            padding:10px 11px 9px;
+            box-shadow:0 6px 16px rgba(148,163,184,0.35);
             text-align:center;
+            font-size:0.85rem;
         }
-        .skill-score {
-            font-size:1.5em;
-            font-weight:bold;
+        .skill-score{
+            font-size:1.3rem;
+            font-weight:600;
             color:#667eea;
         }
-        .progress-bar {
-            height:8px;
+        .progress-bar{
+            height:7px;
             background:#e2e8f0;
             border-radius:4px;
             overflow:hidden;
-            margin-top:8px;
+            margin-top:6px;
         }
-        .progress-fill {
+        .progress-fill{
             height:100%;
             background:linear-gradient(90deg,#667eea,#764ba2);
-            transition:width 0.5s;
+            transition:width .5s;
+        }
+        .tips{
+            margin-top:8px;
+            color:#4a5568;
+        }
+        .tips strong{color:#2d3748}
+
+        /* Mobile tweaks */
+        @media(max-width:640px){
+            body{padding:18px 8px;}
+            .container{padding:20px 14px 22px;border-radius:18px;}
+            h1{font-size:1.65rem;}
+            .score{font-size:2.4rem;}
         }
     </style>
 </head>
@@ -128,7 +158,7 @@ HTML = '''
     <form method="POST" enctype="multipart/form-data">
         <input type="file" name="resume" accept=".pdf" required>
         <textarea name="job_desc" placeholder="Paste job description (or leave blank)">
-Python, Flask/Django, REST APIs, Git, SQL, pandas, machine learning, Docker, Matlab 
+Python, Flask/Django, REST APIs, Git, SQL, pandas, machine learning, Docker, MATLAB, C
         </textarea>
         <button type="submit">🔍 SCAN MY RESUME</button>
     </form>
@@ -143,9 +173,7 @@ Python, Flask/Django, REST APIs, Git, SQL, pandas, machine learning, Docker, Mat
 def scan_resume():
     if request.method == 'POST':
         if 'resume' not in request.files:
-            return render_template_string(HTML,
-                                          result="❌ No PDF uploaded",
-                                          plot="")
+            return render_template_string(HTML, result="❌ No PDF uploaded", plot="")
 
         file = request.files['resume']
 
@@ -157,32 +185,24 @@ def scan_resume():
                     text += page.extract_text() or ""
 
             if not text.strip():
-                return render_template_string(
-                    HTML,
-                    result="❌ No text found in PDF",
-                    plot=""
-                )
+                return render_template_string(HTML, result="❌ No text found in PDF", plot="")
 
-            # Keyword analysis
+            # Keyword analysis (simple weighted keyword count as used in many resume tools). [web:107][web:109]
             text_lower = text.lower()
             skills_found = {}
 
             for keyword, weight in JOB_KEYWORDS.items():
-                count = len(re.findall(re.escape(keyword), text_lower))
+                count = len(re.findall(re.escape(keyword.lower()), text_lower))
                 if count > 0:
                     skills_found[keyword] = min(100, count * weight)
 
-            # Score
             total_score = sum(skills_found.values())
             max_score = sum(JOB_KEYWORDS.values())
             percentage = min(100, (total_score / max_score) * 100) if max_score else 0
 
-            # Skills cards with progress bars
             skills_html = ""
             for skill, score in sorted(
-                skills_found.items(),
-                key=lambda x: x[1],
-                reverse=True
+                skills_found.items(), key=lambda x: x[1], reverse=True
             )[:6]:
                 progress = min(100, score)
                 skills_html += f"""
@@ -209,28 +229,15 @@ def scan_resume():
             <div class="skills-grid">{skills_html}</div>
             """
             if suggestions:
-                result_html += (
-                    "<p><strong>🚀 Quick Wins:</strong> "
-                    + ", ".join(suggestions)
-                    + "</p>"
-                )
+                result_html += "<p class='tips'><strong>🚀 Quick Wins:</strong> " + ", ".join(suggestions) + "</p>"
             else:
-                result_html += "<p><strong>✅ Ready for Python internships!</strong></p>"
+                result_html += "<p class='tips'><strong>✅ Ready for Python internships!</strong></p>"
 
-            return render_template_string(
-                HTML,
-                result=Markup(result_html),
-                plot=""
-            )
+            return render_template_string(HTML, result=Markup(result_html), plot="")
 
         except Exception as e:
-            return render_template_string(
-                HTML,
-                result=f"❌ Error: {str(e)}",
-                plot=""
-            )
+            return render_template_string(HTML, result=f"❌ Error: {str(e)}", plot="")
 
-    # GET request
     return render_template_string(HTML, result="", plot="")
 
 if __name__ == '__main__':
